@@ -101,7 +101,10 @@ def update():
                                 yield json.dumps({"status": "warning", "message": "ID is empty."}) + "\n"
                                 continue
 
-                            KoboUpdateSchema.validate_kobo_id(sub_id)
+                            if KoboUpdateSchema.validate_kobo_id(sub_id):
+                                invalid_ids_count +=1
+                                yield json.dumps({"status": "warning", "message": "ID is invalid."}) + "\n"
+                                continue
 
                             if sub_id not in existing_ids:
                                 not_found_count += 1

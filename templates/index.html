@@ -44,6 +44,10 @@
             opacity: 1;
         }
 
+        .filter-warning {
+            filter: invert(78%) sepia(64%) saturate(738%) hue-rotate(356deg) brightness(102%) contrast(106%) !important;
+        }
+
         .main-card { 
             border-radius: var(--card-radius); 
             border: none; 
@@ -424,7 +428,7 @@
                                     progressDiv.innerHTML = `
                                         <div class="text-center">
                                             <div class="text-warning mb-2">
-                                                <img src="/static/icons/exclamation-triangle.svg" width="30" class="mb-2"><br>
+                                                <img src="/static/icons/exclamation-triangle.svg" width="30" class="mb-2 filter-warning"><br>
                                                 <span class="small fw-bold">${data.message}</span>
                                             </div>
                                             <div class="d-grid gap-2 d-md-block mt-3">
