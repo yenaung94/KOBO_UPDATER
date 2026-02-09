@@ -34,12 +34,16 @@ def update():
         # 3️⃣ Fetch Survey Schema
         with httpx.Client(headers=headers, timeout=30) as client:
             verify_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/"
-            auth_resp = client.get(verify_url)
-            if auth_resp.status_code == 401:
-                return jsonify({"status": "error", "message": "Invalid API Token."}), 401
-            if auth_resp.status_code == 404:
-                return jsonify({"status": "error", "message": "Asset ID not found."}), 404
-            if httpx.ConnectError:
+            try:
+                auth_resp = request.get(verify_url, headers=headers, timeout=30)
+                if auth_resp.status_code == 401:
+                    return jsonify({"status": "error", "message": "Invalid API Token."}), 401
+                if auth_resp.status_code == 404:
+                    return jsonify({"status": "error", "message": "Asset ID not found."}), 404
+                
+                survey = auth_resp.json().get('content', {}).get('survey', [])
+                
+            except request.exceptions.ConnectionError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
 
             survey = auth_resp.json().get('content', {}).get('survey', [])
