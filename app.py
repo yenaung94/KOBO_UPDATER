@@ -4,7 +4,7 @@ import os
 from update_feature import update_bp
 from clone_feature import clone_bp
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
 app.register_blueprint(update_bp)
