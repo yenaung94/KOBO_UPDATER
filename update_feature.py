@@ -101,9 +101,11 @@ def update():
                                 yield json.dumps({"status": "warning", "message": "ID is empty."}) + "\n"
                                 continue
 
-                            if KoboUpdateSchema.validate_kobo_id(sub_id):
-                                invalid_ids_count +=1
-                                yield json.dumps({"status": "warning", "message": "ID is invalid."}) + "\n"
+                            try:
+                                KoboUpdateSchema.validate_kobo_id(sub_id)
+                            except (ValueError, TypeError) as e:
+                                invalid_ids_count += 1 
+                                yield json.dumps({"status": "warning", "message": f"Invalid ID format: {str(e)}"}) + "\n"
                                 continue
 
                             if sub_id not in existing_ids:
