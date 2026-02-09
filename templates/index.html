@@ -6,7 +6,6 @@
     <title>Kobo Patcher</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='icons/bootstrap-icons.css') }}">
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}"></script>
 
@@ -22,6 +21,16 @@
         body { 
             font-family: 'Poppins', sans-serif; 
             background-color: var(--bg-light); 
+        }
+
+        .icon-svg {
+            vertical-align: middle;
+            margin-bottom: 2px;
+            /* If icons are black, this filter makes them a soft gray-blue */
+            filter: opacity(0.6); 
+        }
+        .active .icon-svg, .btn-primary .icon-svg {
+            filter: brightness(0) invert(1); /* Makes icons white when active/on primary buttons */
         }
 
         .main-card { 
@@ -85,16 +94,16 @@
                         <p class="text-muted small mb-0">Advanced Data Management Suite</p>
                     </div>
                     <button class="btn btn-light rounded-pill border shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#guideModal">
-                        <i class="bi bi-info-circle me-1"></i> Setup Guide
+                        <img src="{{ url_for('static', filename='icons/info-circle.svg') }}" width="16" height="16" class="me-1 icon-svg"> Setup Guide
                     </button>
                 </div>
 
                 <div class="nav-segment" role="tablist">
                     <button class="active" data-bs-toggle="pill" data-bs-target="#updatePanel">
-                        <i class="bi bi-pencil-square me-2"></i>Bulk Update
+                        <img src="{{ url_for('static', filename='icons/pencil-square.svg') }}" width="16" height="16" class="me-2 icon-svg"> Bulk Update
                     </button>
                     <button data-bs-toggle="pill" data-bs-target="#clonePanel">
-                        <i class="bi bi-layers me-2"></i>Clone Data
+                        <img src="{{ url_for('static', filename='icons/layers.svg') }}" width="16" height="16" class="me-2 icon-svg"> Clone Data
                     </button>
                 </div>
 
@@ -105,21 +114,21 @@
                                 <div class="col-md-6">
                                     <label class="form-label text-uppercase">Server URL</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
                                         <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-uppercase">API Token</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
                                         <input type="password" name="token" class="form-control" placeholder="Required" required>
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label text-uppercase">Asset (Form) ID</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-file-earmark-code"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/file-earmark-code.svg') }}" width="16" height="16"></span>
                                         <input type="text" name="asset_id" class="form-control" placeholder="Project ID to update" required>
                                     </div>
                                 </div>
@@ -129,7 +138,7 @@
                                 </div>
                                 <div class="col-12 mt-5">
                                     <button type="submit" class="btn btn-primary btn-update w-100 text-white">
-                                        <i class="bi bi-arrow-repeat me-2"></i> Start Bulk Update
+                                        <img src="{{ url_for('static', filename='icons/arrow-repeat.svg') }}" width="18" height="18" class="me-2 icon-svg"> Start Bulk Update
                                     </button>
                                 </div>
                             </div>
@@ -142,21 +151,21 @@
                                 <div class="col-md-6">
                                     <label class="form-label text-uppercase">Server URL</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
                                         <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-uppercase">API Token</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
                                         <input type="password" name="token" class="form-control" placeholder="Required" required>
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label text-uppercase">Target Project Asset ID</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
+                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/plus-circle.svg') }}" width="16" height="16"></span>
                                         <input type="text" name="target_asset_id" class="form-control" placeholder="ID of the new project" required>
                                     </div>
                                 </div>
@@ -166,7 +175,7 @@
                                 </div>
                                 <div class="col-12 mt-5">
                                     <button type="submit" class="btn btn-success btn-update w-100 text-white" style="background: #1cc88a;">
-                                        <i class="bi bi-cloud-upload me-2"></i> Import to New Project
+                                        <img src="{{ url_for('static', filename='icons/cloud-upload.svg') }}" width="18" height="18" class="me-2 icon-svg"> Import to New Project
                                     </button>
                                 </div>
                             </div>
@@ -177,7 +186,7 @@
             
             <div class="text-center mt-4">
                 <p class="text-muted small">
-                    <i class="bi bi-cpu p-1 me-1"></i> 
+                    <img src="{{ url_for('static', filename='icons/cpu.svg') }}" width="14" height="14" class="me-1 icon-svg">
                     Powered by <strong>SCI Magway MEAL</strong>
                 </p>
             </div>
