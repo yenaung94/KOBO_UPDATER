@@ -423,6 +423,11 @@
                                 form.dataset.paused = "true";
                                 Swal.hideLoading();
                                 
+                                const swalConfirmBtn = Swal.getConfirmButton();
+                                if (swalConfirmBtn) {
+                                    swalConfirmBtn.style.setProperty('display', 'none', 'important');
+                                }
+
                                 const progressDiv = document.getElementById('progress-text');
                                 if (progressDiv) {
                                     progressDiv.innerHTML = `
@@ -453,11 +458,15 @@
 
                             else if (data.status === 'success') {
                                 Swal.fire({
-                                    icon: 'success', 
-                                    title: 'Completed', 
-                                    html: `<div class="text-muted">${data.message}</div>`,
-                                    confirmButtonColor: '#4e73df'
-                                });
+                                        icon: 'success', 
+                                        title: 'Completed', 
+                                        // Just show the message from Python. It has everything.
+                                        html: `<div>${data.message}</div>`, 
+                                        confirmButtonText: 'Done'
+                                    });
+                                skippedRows = []; // Reset the array
+                                delete form.dataset.paused;
+                                delete form.dataset.skipAllWarnings;
                                 form.reset();
                             } 
 

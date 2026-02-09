@@ -3,6 +3,7 @@ import uuid
 import pandas as pd
 import json
 import httpx
+import contextlib
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, Response, stream_with_context
 from schemas import KoboUpdateSchema
@@ -16,7 +17,7 @@ def set_nested_value(data_dict, path, value):
     data_dict[keys[-1]] = value
 
 @clone_bp.route('/clone', methods=['POST'])
-async def clone():
+def clone():
     try:
         # 1. Config Validation
         raw_url = request.form.get('server_url', '').rstrip('/')
@@ -44,11 +45,11 @@ async def clone():
             "Accept": "application/json"
         }
         
-        # 3. Initial Schema Fetch (To validate Asset and get Mapping)
-        async with httpx.AsyncClient(headers=headers, timeout=30.0) as client:
+        # 3. Initial Schema Fetch
+        with httpx.Client(headers=headers, timeout=30.0) as client:
             verify_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/"
             try:
-                auth_resp = await client.get(verify_url)
+                auth_resp = client.get(verify_url)
                 if auth_resp.status_code == 401:
                     return jsonify({"status": "error", "message": "Invalid API Token."}), 401
                 if auth_resp.status_code == 404:
@@ -58,7 +59,7 @@ async def clone():
             except httpx.ConnectError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
 
-        # Path Mapping Logic (Extracted from survey)
+        # Path Mapping Logic
         path_map = {}
         group_stack = []
         excluded_types = ['begin_group', 'end_group', 'calculate', 'note', 'deviceid']
@@ -80,54 +81,47 @@ async def clone():
                        for col in df.columns if str(col).strip().lower() in path_map}
 
         # 4. Generator Function for Streaming
-        async def generate():
+        def generate():
             success_count = 0
-            skipped_count = 0
+            duplicate_id_count = 0
+            invalid_id_count = 0
             processed_count = 0
             total_rows = len(df)
             has_id_column = '_id' in df.columns
             
-            base_api_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/data"
+            base_api_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/data/"
             submit_url = f"{config.server_url}/submission" if is_private_kc else f"{config.server_url}/api/v2/assets/{config.asset_id}/submissions/"
             
-            # Open client inside the generator
-            async with httpx.AsyncClient(headers=headers, timeout=120.0) as client:
+            with httpx.Client(headers=headers, timeout=120.0, follow_redirects=True) as client:
+                # Pre-fetch existing IDs
                 existing_ids = set()
                 if has_id_column:
-                    params = {
-                        "fields": '["_id"]',
-                        "limit": 10000
-                    }
-                    try:
-                        list_resp = await client.get(base_api_url, params=params)
+                    with contextlib.suppress(Exception):
+                        list_resp = client.get(f"{base_api_url}?fields=[\"_id\"]&limit=10000")
                         if list_resp.status_code == 200:
                             data = list_resp.json()
                             existing_ids = {str(item['_id']) for item in data.get('results', [])}
-                        else:
-                            yield json.dumps({
-                                "status": "warning", 
-                                "message": f"Duplicate check failed (HTTP {list_resp.status_code}). Proceeding with caution."
-                            }) + "\n"
-                    except Exception as e:
-                        yield json.dumps({
-                            "status": "warning", 
-                            "message": f"Duplicate check skipped due to error: {str(e)}"
-                        }) + "\n" 
-                    
+                
                 for _, row in df.iterrows():
                     processed_count += 1
                     if has_id_column:
                         raw_id = row.get('_id')
                         sub_id = str(raw_id).split('.')[0].strip() if pd.notna(raw_id) else ""
                         
-                        # 2. Duplicate/Validation Check
                         try:
-                            KoboUpdateSchema.validate_kobo_id(sub_id)
+                            # 1. Check for Invalid Format/Empty
+                            try:
+                                KoboUpdateSchema.validate_kobo_id(sub_id)
+                            except ValueError as e:
+                                invalid_id_count += 1 
+                                raise ValueError(str(e))
+                            
+                            # 2. Check for Duplicates
                             if sub_id in existing_ids:
-                                raise ValueError(f"ID {sub_id} already exists.")
-
+                                duplicate_id_count +=1
+                                raise ValueError(f"ID {sub_id} already exists in Kobo.")
+                        
                         except ValueError as e:
-                            skipped_count += 1
                             yield json.dumps({
                                 "status": "warning", 
                                 "message": str(e)
@@ -154,7 +148,7 @@ async def clone():
                     } if is_private_kc else submission_data
 
                     try:
-                        resp = await client.post(submit_url, json=payload)
+                        resp = client.post(submit_url, json=payload)
                         if resp.status_code in [200, 201, 202]:
                             success_count += 1
                         else:
@@ -163,6 +157,10 @@ async def clone():
                                 "message": f"Row {processed_count} failed server-side: {resp.text[:100]}"
                             }) + "\n"
                     except Exception as e:
+                        yield json.dumps({
+                            "status": "error", 
+                            "message": f"System error on row {processed_count}: {str(e)}"
+                        }) + "\n"
                         continue
                     
                     yield json.dumps({
@@ -174,27 +172,13 @@ async def clone():
 
                 yield json.dumps({
                     "status": "success", 
-                    "message": f"Successfully cloned {success_count} records. Skipped {skipped_count} duplicates/invalid."
+                    "message": f"Successfully cloned {success_count} records. Skipped {duplicate_id_count} duplicated _id, {invalid_id_count} invalid _id."
                 }) + "\n"
 
-        import asyncio
-
-        def sync_generator_wrapper(async_gen):
-            loop = asyncio.new_event_loop()
-            try:
-                while True:
-                    try:
-                        yield loop.run_until_complete(async_gen.__anext__())
-                    except StopAsyncIteration:
-                        break
-            finally:
-                loop.close()
-
         return Response(
-            stream_with_context(sync_generator_wrapper(generate())), 
+            stream_with_context(generate()), 
             content_type='application/x-ndjson'
         )
 
     except Exception as e:
-        print(f"CRITICAL: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500

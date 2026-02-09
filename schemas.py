@@ -33,7 +33,7 @@ class KoboUpdateSchema(BaseModel) :
     def validate_kobo_id(cls, v: str) -> str:
         
         if not v.isdigit():
-            raise ValueError("The _id must contain only numbers.")
+            raise ValueError("The _id must contain only numbers or not empty.")
         
         if len(v) < 7 or len(v) > 8:
             raise ValueError("The _id length appears invalid for a Kobo record.")
