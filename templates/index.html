@@ -9,13 +9,14 @@
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}"></script>
 
-
     <style>
         :root {
             --primary-color: #4e73df;
             --bg-light: #f8f9fa;
             --card-radius: 1.25rem;
             --text-muted: #aaacba;
+            /* This filter converts black to #4e73df */
+            --icon-filter-primary: invert(43%) sepia(81%) saturate(2253%) hue-rotate(211deg) brightness(91%) contrast(92%);
         }
 
         body { 
@@ -23,14 +24,24 @@
             background-color: var(--bg-light); 
         }
 
+        /* Base icon styling */
         .icon-svg {
             vertical-align: middle;
             margin-bottom: 2px;
-            /* If icons are black, this filter makes them a soft gray-blue */
-            filter: opacity(0.6); 
+            transition: filter 0.2s ease;
+            filter: opacity(0.5); /* Default: faded/grayish */
         }
-        .active .icon-svg, .btn-primary .icon-svg {
-            filter: brightness(0) invert(1); /* Makes icons white when active/on primary buttons */
+
+        /* 1. Highlight icon when the input group is clicked/focused */
+        .input-group:focus-within .input-group-text img {
+            filter: var(--icon-filter-primary) !important;
+            opacity: 1;
+        }
+
+        /* 2. Highlight icon when button/tab is active or on primary buttons */
+        .active .icon-svg, .btn-primary .icon-svg, .btn-success .icon-svg {
+            filter: brightness(0) invert(1) !important; /* Turns icons pure white */
+            opacity: 1;
         }
 
         .main-card { 
@@ -62,11 +73,23 @@
         .nav-segment button.active { color: white; background: var(--primary-color); }
 
         .form-label { font-weight: 500; font-size: 0.85rem; color: #5a5c69; }
-        .input-group-text { background: transparent; border-right: none; color: #d1d3e2; }
+        
+        /* Input Group Focus Effects */
+        .input-group-text { 
+            background: transparent; 
+            border-right: none; 
+            color: #d1d3e2; 
+            transition: border-color 0.2s;
+        }
         .form-control { border-left: none; padding: 0.75rem; }
         .form-control:focus { box-shadow: none; border-color: #dee2e6; }
-        .input-group:focus-within .input-group-text { border-color: var(--primary-color); color: var(--primary-color); }
-        .input-group:focus-within .form-control { border-color: var(--primary-color); }
+        
+        .input-group:focus-within .input-group-text { 
+            border-color: var(--primary-color); 
+        }
+        .input-group:focus-within .form-control { 
+            border-color: var(--primary-color); 
+        }
 
         .btn-update { 
             background: var(--primary-color); 
@@ -77,7 +100,6 @@
             transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         .btn-update:hover { background: #2e59d9; transform: translateY(-3px); }
-
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
