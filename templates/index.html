@@ -106,396 +106,375 @@
 </head>
 <body>
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="main-card p-4 p-md-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="fw-bold text-primary mb-1">Kobo Patcher</h2>
-                        <p class="text-muted small mb-0">Advanced Data Management Suite</p>
-                    </div>
-                    <button class="btn btn-light rounded-pill border shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#guideModal">
-                        <img src="{{ url_for('static', filename='icons/info-circle.svg') }}" width="16" height="16" class="me-1 icon-svg"> Setup Guide
-                    </button>
-                </div>
-
-                <div class="nav-segment" role="tablist">
-                    <button class="active" data-bs-toggle="pill" data-bs-target="#updatePanel">
-                        <img src="{{ url_for('static', filename='icons/pencil-square.svg') }}" width="16" height="16" class="me-2 icon-svg"> Bulk Update
-                    </button>
-                    <button data-bs-toggle="pill" data-bs-target="#clonePanel">
-                        <img src="{{ url_for('static', filename='icons/layers.svg') }}" width="16" height="16" class="me-2 icon-svg"> Clone Data
-                    </button>
-                </div>
-
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="updatePanel">
-                        <form onsubmit="handleFormSubmit(event, 'update')">
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <label class="form-label text-uppercase">Server URL</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
-                                        <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-uppercase">API Token</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
-                                        <input type="password" name="token" class="form-control" placeholder="Required" required>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label text-uppercase">Asset (Form) ID</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/file-earmark-code.svg') }}" width="16" height="16"></span>
-                                        <input type="text" name="asset_id" class="form-control" placeholder="Project ID to update" required>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label text-uppercase">Data Source (CSV)</label>
-                                    <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
-                                </div>
-                                <div class="col-12 mt-5">
-                                    <button type="submit" class="btn btn-primary btn-update w-100 text-white">
-                                        <img src="{{ url_for('static', filename='icons/arrow-repeat.svg') }}" width="18" height="18" class="me-2 icon-svg"> Start Bulk Update
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="main-card p-4 p-md-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="fw-bold text-primary mb-1">Kobo Patcher</h2>
+                            <p class="text-muted small mb-0">Advanced Data Management Suite</p>
+                        </div>
+                        <button class="btn btn-light rounded-pill border shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#guideModal">
+                            <img src="{{ url_for('static', filename='icons/info-circle.svg') }}" width="16" height="16" class="me-1 icon-svg"> Setup Guide
+                        </button>
                     </div>
 
-                    <div class="tab-pane fade" id="clonePanel">
-                        <form onsubmit="handleFormSubmit(event, 'clone')">
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <label class="form-label text-uppercase">Server URL</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
-                                        <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-uppercase">API Token</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
-                                        <input type="password" name="token" class="form-control" placeholder="Required" required>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label text-uppercase">Target Project Asset ID</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><img src="{{ url_for('static', filename='icons/plus-circle.svg') }}" width="16" height="16"></span>
-                                        <input type="text" name="target_asset_id" class="form-control" placeholder="ID of the new project" required>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label text-uppercase">Old Data (CSV)</label>
-                                    <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
-                                </div>
-                                <div class="col-12 mt-5">
-                                    <button type="submit" class="btn btn-success btn-update w-100 text-white" style="background: #1cc88a;">
-                                        <img src="{{ url_for('static', filename='icons/cloud-upload.svg') }}" width="18" height="18" class="me-2 icon-svg"> Import to New Project
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="nav-segment" role="tablist">
+                        <button class="active" data-bs-toggle="pill" data-bs-target="#updatePanel">
+                            <img src="{{ url_for('static', filename='icons/pencil-square.svg') }}" width="16" height="16" class="me-2 icon-svg"> Bulk Update
+                        </button>
+                        <button data-bs-toggle="pill" data-bs-target="#clonePanel">
+                            <img src="{{ url_for('static', filename='icons/layers.svg') }}" width="16" height="16" class="me-2 icon-svg"> Clone Data
+                        </button>
                     </div>
-                </div>
-            </div> 
-            
-            <div class="text-center mt-4">
-                <p class="text-muted small">
-                    <img src="{{ url_for('static', filename='icons/cpu.svg') }}" width="14" height="14" class="me-1 icon-svg">
-                    Powered by <strong>SCI Magway MEAL</strong>
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="modal fade" id="guideModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 rounded-4 overflow-hidden">
-            <div class="modal-header border-0 bg-light py-3">
-                <h5 class="modal-title fw-bold"><i class="bi bi-journal-check me-2 text-primary"></i>Detailed Setup Instructions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="accordion accordion-flush" id="guideAcc">
-                    <div class="accordion-item mb-3 border rounded-3">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button rounded-3" data-bs-toggle="collapse" data-bs-target="#g1">
-                                <span class="badge bg-primary me-3">1</span> <strong>Get Your API Token</strong>
-                            </button>
-                        </h2>
-                        <div id="g1" class="accordion-collapse collapse show" data-bs-parent="#guideAcc">
-                            <div class="accordion-body">
-                                <p>Your API Token is the secure key that connects this app to your Kobo account.</p>
-                                <ol>
-                                    <li>Log in to your <strong>KoboToolbox</strong>.</li>
-                                    <li>Click on your <strong>User Icon</strong> (top right) and select <strong>Settings</strong>.</li>
-                                    <li>Go to <strong>Account Settings</strong> and scroll to the bottom.</li>
-                                    <li>Press display and copy the string under <strong>API Token</strong>.</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item mb-3 border rounded-3">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g2">
-                                <span class="badge bg-primary me-3">2</span> <strong>Locate Asset ID (Form ID)</strong>
-                            </button>
-                        </h2>
-                        <div id="g2" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
-                            <div class="accordion-body">
-                                <p>Each project has a unique ID. To find it:</p>
-                                <ol>
-                                    <li>Open your Kobo Project.</li>
-                                    <li>Check the <strong>URL Bar</strong> in your browser.</li>
-                                    <li>Copy the string after <code>/forms/</code> (e.g., <code>aNW8jPq...</code>).</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item mb-3 border rounded-3">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g3">
-                                <span class="badge bg-primary me-3">3</span> <strong>Export Proper CSV</strong>
-                            </button>
-                        </h2>
-                        <div id="g3" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
-                            <div class="accordion-body">
-                                <p>The app needs a specific CSV structure to match questions correctly.</p>
-                                <ol>
-                                    <li>Go to <strong>Downloads</strong> tab.</li>
-                                    <li>Select <strong>Export type: CSV</strong>.</li>
-                                    <li><strong>Crucial:</strong> Check the box <strong>"Include groups in headers"</strong>.</li>
-                                    <li>Click <strong>Export</strong> and Download.</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item mb-3 border rounded-3">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g4">
-                                <span class="badge bg-primary me-3">4</span> <strong>Upload & Run</strong>
-                            </button>
-                        </h2>
-                        <div id="g4" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
-                            <div class="accordion-body">
-                                <p>Fill in the form on the main screen:</p>
-                                <ul>
-                                    <li><strong>Data CSV:</strong> Upload the file from Step 3.</li>
-                                    <li><strong>Uploaded:</strong> Only upload rows that require updates; avoid including data you don't intend to change.</li>
-                                </ul>
-                                <div class="alert alert-warning py-2 small">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Note: Ensure your CSV has the <code>_id</code> column.
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="updatePanel">
+                            <form onsubmit="handleFormSubmit(event, 'update')">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-uppercase">Server URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
+                                            <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-uppercase">API Token</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
+                                            <input type="password" name="token" class="form-control" placeholder="Required" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-uppercase">Asset (Form) ID</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/file-earmark-code.svg') }}" width="16" height="16"></span>
+                                            <input type="text" name="asset_id" class="form-control" placeholder="Project ID to update" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-uppercase">Data Source (CSV)</label>
+                                        <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
+                                    </div>
+                                    <div class="col-12 mt-5">
+                                        <button type="submit" class="btn btn-primary btn-update w-100 text-white">
+                                            <img src="{{ url_for('static', filename='icons/arrow-repeat.svg') }}" width="18" height="18" class="me-2 icon-svg"> Start Bulk Update
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
-                    </div>
-                    <div class="accordion-item mb-3 border rounded-3">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g5">
-                                <span class="badge bg-primary me-3">5</span> <strong>Fix Burmese/Unicode Font Issues</strong>
-                            </button>
-                        </h2>
-                        <div id="g5" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
-                            <div class="accordion-body">
-                                <p>If your Burmese text looks like <code>????</code> or broken symbols, <strong>do not</strong> double-click the CSV file. Follow this "Import" method instead:</p>
-                                <h6 class="mt-3"><strong>How to Import into Excel Safely:</strong></h6>
-                                <ol>
-                                    <li>Open a <strong>New Blank Excel</strong> file.</li>
-                                    <li>Go to the <strong>Data</strong> tab at the top.</li>
-                                    <li>Click <strong>Get Data</strong> > <strong>From File</strong> > <strong>From Text/CSV</strong>.</li>
-                                    <li>Select your Kobo CSV file and click <strong>Import</strong>.</li>
-                                    <li><strong>Crucial:</strong> In the preview window, change <strong>File Origin</strong> to <code>65001: Unicode (UTF-8)</code>.</li>
-                                    <li>Click <strong>Load</strong>. Your Burmese text will now appear correctly.</li>
-                                </ol>
-                                <div class="alert alert-danger py-2 small mt-3">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Important:</strong> When you finish editing, you must <strong>Save As</strong> and select <code>CSV UTF-8 (Comma delimited)</code> to keep the Burmese font working for the upload.
+
+                        <div class="tab-pane fade" id="clonePanel">
+                            <form onsubmit="handleFormSubmit(event, 'clone')">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-uppercase">Server URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
+                                            <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-uppercase">API Token</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
+                                            <input type="password" name="token" class="form-control" placeholder="Required" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-uppercase">Target Project Asset ID</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><img src="{{ url_for('static', filename='icons/plus-circle.svg') }}" width="16" height="16"></span>
+                                            <input type="text" name="target_asset_id" class="form-control" placeholder="ID of the new project" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-uppercase">Old Data (CSV)</label>
+                                        <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
+                                    </div>
+                                    <div class="col-12 mt-5">
+                                        <button type="submit" class="btn btn-success btn-update w-100 text-white" style="background: #1cc88a;">
+                                            <img src="{{ url_for('static', filename='icons/cloud-upload.svg') }}" width="18" height="18" class="me-2 icon-svg"> Import to New Project
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div> 
-            </div>
-            <div class="modal-footer border-0 bg-light">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Got it!</button>
+                
+                <div class="text-center mt-4">
+                    <p class="text-muted small">
+                        <img src="{{ url_for('static', filename='icons/cpu.svg') }}" width="14" height="14" class="me-1 icon-svg">
+                        Powered by <strong>SCI Magway MEAL</strong>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Helper to pause execution until a specific button is clicked
-    const waitForClick = () => new Promise(resolve => {
-        const btn = document.getElementById('continue-btn');
-        if (!btn) return resolve();
-        btn.onclick = () => resolve();
-    });
+    <div class="modal fade" id="guideModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 overflow-hidden">
+                <div class="modal-header border-0 bg-light py-3">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-journal-check me-2 text-primary"></i>Detailed Setup Instructions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="accordion accordion-flush" id="guideAcc">
+                        <div class="accordion-item mb-3 border rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button rounded-3" data-bs-toggle="collapse" data-bs-target="#g1">
+                                    <span class="badge bg-primary me-3">1</span> <strong>Get Your API Token</strong>
+                                </button>
+                            </h2>
+                            <div id="g1" class="accordion-collapse collapse show" data-bs-parent="#guideAcc">
+                                <div class="accordion-body">
+                                    <p>Your API Token is the secure key that connects this app to your Kobo account.</p>
+                                    <ol>
+                                        <li>Log in to your <strong>KoboToolbox</strong>.</li>
+                                        <li>Click on your <strong>User Icon</strong> (top right) and select <strong>Settings</strong>.</li>
+                                        <li>Go to <strong>Account Settings</strong> and scroll to the bottom.</li>
+                                        <li>Press display and copy the string under <strong>API Token</strong>.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-3 border rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g2">
+                                    <span class="badge bg-primary me-3">2</span> <strong>Locate Asset ID (Form ID)</strong>
+                                </button>
+                            </h2>
+                            <div id="g2" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
+                                <div class="accordion-body">
+                                    <p>Each project has a unique ID. To find it:</p>
+                                    <ol>
+                                        <li>Open your Kobo Project.</li>
+                                        <li>Check the <strong>URL Bar</strong> in your browser.</li>
+                                        <li>Copy the string after <code>/forms/</code> (e.g., <code>aNW8jPq...</code>).</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-3 border rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g3">
+                                    <span class="badge bg-primary me-3">3</span> <strong>Export Proper CSV</strong>
+                                </button>
+                            </h2>
+                            <div id="g3" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
+                                <div class="accordion-body">
+                                    <p>The app needs a specific CSV structure to match questions correctly.</p>
+                                    <ol>
+                                        <li>Go to <strong>Downloads</strong> tab.</li>
+                                        <li>Select <strong>Export type: CSV</strong>.</li>
+                                        <li><strong>Crucial:</strong> Check the box <strong>"Include groups in headers"</strong>.</li>
+                                        <li>Click <strong>Export</strong> and Download.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-3 border rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g4">
+                                    <span class="badge bg-primary me-3">4</span> <strong>Upload & Run</strong>
+                                </button>
+                            </h2>
+                            <div id="g4" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
+                                <div class="accordion-body">
+                                    <p>Fill in the form on the main screen:</p>
+                                    <ul>
+                                        <li><strong>Data CSV:</strong> Upload the file from Step 3.</li>
+                                        <li><strong>Uploaded:</strong> Only upload rows that require updates; avoid including data you don't intend to change.</li>
+                                    </ul>
+                                    <div class="alert alert-warning py-2 small">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Note: Ensure your CSV has the <code>_id</code> column.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-3 border rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed rounded-3" data-bs-toggle="collapse" data-bs-target="#g5">
+                                    <span class="badge bg-primary me-3">5</span> <strong>Fix Burmese/Unicode Font Issues</strong>
+                                </button>
+                            </h2>
+                            <div id="g5" class="accordion-collapse collapse" data-bs-parent="#guideAcc">
+                                <div class="accordion-body">
+                                    <p>If your Burmese text looks like <code>????</code> or broken symbols, <strong>do not</strong> double-click the CSV file. Follow this "Import" method instead:</p>
+                                    <h6 class="mt-3"><strong>How to Import into Excel Safely:</strong></h6>
+                                    <ol>
+                                        <li>Open a <strong>New Blank Excel</strong> file.</li>
+                                        <li>Go to the <strong>Data</strong> tab at the top.</li>
+                                        <li>Click <strong>Get Data</strong> > <strong>From File</strong> > <strong>From Text/CSV</strong>.</li>
+                                        <li>Select your Kobo CSV file and click <strong>Import</strong>.</li>
+                                        <li><strong>Crucial:</strong> In the preview window, change <strong>File Origin</strong> to <code>65001: Unicode (UTF-8)</code>.</li>
+                                        <li>Click <strong>Load</strong>. Your Burmese text will now appear correctly.</li>
+                                    </ol>
+                                    <div class="alert alert-danger py-2 small mt-3">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Important:</strong> When you finish editing, you must <strong>Save As</strong> and select <code>CSV UTF-8 (Comma delimited)</code> to keep the Burmese font working for the upload.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Got it!</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Handle UI segment navigation
-    document.querySelectorAll('.nav-segment button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.nav-segment button').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+    <script>
+        // Helper to pause execution until a specific button is clicked
+        const waitForClick = () => new Promise(resolve => {
+            const btn = document.getElementById('continue-btn');
+            if (!btn) return resolve();
+            btn.onclick = () => resolve();
         });
-    });
-    
-    async function handleFormSubmit(e, mode) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
 
-        const form = e.target;
+        // Handle UI segment navigation
+        document.querySelectorAll('.nav-segment button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-segment button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
         
-        // Reset flags for a fresh submission
-        delete form.dataset.paused;
-        delete form.dataset.skipAllWarnings;
+        async function handleFormSubmit(e, mode) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
 
-        const fileInput = form.querySelector('input[type="file"]');
-        if (fileInput && fileInput.files.length === 0) {
-            Swal.fire({ icon: 'warning', title: 'File Required', text: 'Please select a CSV file.' });
-            return;
-        }
+            const form = e.target;
+            
+            delete form.dataset.paused;
+            delete form.dataset.skipAllWarnings;
 
-        if (form.dataset.submitting === 'true') return;
-        form.dataset.submitting = 'true';
+            const fileInput = form.querySelector('input[type="file"]');
+            if (fileInput && fileInput.files.length === 0) {
+                Swal.fire({ icon: 'warning', title: 'File Required', text: 'Please select a CSV file.' });
+                return;
+            }
 
-        // Update button state
-        const btn = form.querySelector('button[type="submit"]');
-        const originalContent = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-arrow-repeat spin me-2"></i> Processing...';
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
 
-        Swal.fire({ 
-            title: 'Processing Data', 
-            html: '<div id="progress-text">Initializing connection...</div>',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading() 
-        });
+            // Update button state using your local SVG icon
+            const btn = form.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<img src="/static/icons/arrow-repeat.svg" width="18" height="18" class="spin me-2 icon-svg"> Processing...';
 
-        try {
-            const response = await fetch(`/${mode}`, { 
-                method: 'POST', 
-                body: new FormData(form) 
+            Swal.fire({ 
+                title: 'Processing Data', 
+                html: '<div id="progress-text">Initializing connection...</div>',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading() 
             });
 
-            if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Server Error');
-            }
+            try {
+                const response = await fetch(`/${mode}`, { 
+                    method: 'POST', 
+                    body: new FormData(form) 
+                });
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let skippedRows = [];
+                if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Server Error');
+                }
 
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
 
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    
-                    try {
-                        const data = JSON.parse(line);
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
 
-                        // --- 1. PROGRESS STATUS ---
-                        if (data.status === 'progress') {
-                            // Only update UI if not currently paused for a warning
-                            if (!form.dataset.paused || form.dataset.skipAllWarnings === "true") {
-                                const progressDiv = document.getElementById('progress-text');
-                                if (progressDiv) {
-                                    progressDiv.innerHTML = `Finished: <b style="font-size: 1.2em; color: #0d6efd;">${data.current}</b> of ${data.total}`;
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        
+                        try {
+                            const data = JSON.parse(line);
+
+                            if (data.status === 'progress') {
+                                if (!form.dataset.paused || form.dataset.skipAllWarnings === "true") {
+                                    const progressDiv = document.getElementById('progress-text');
+                                    if (progressDiv) {
+                                        progressDiv.innerHTML = `Finished: <b style="font-size: 1.2em; color: #4e73df;">${data.current}</b> of ${data.total}`;
+                                    }
                                 }
                             }
-                        }
 
-                        // --- 2. WARNING STATUS (Duplicates/Invalid) ---
-                        else if (data.status === 'warning') {
-                            skippedRows.push(data.message);
+                            else if (data.status === 'warning') {
+                                if (form.dataset.skipAllWarnings === "true") continue;
 
-                            if (form.dataset.skipAllWarnings === "true"){
-                                continue;
-                            };
-
-                            form.dataset.paused = "true";
-                            Swal.hideLoading();
-                            const swalConfirmBtn = Swal.getConfirmButton();
-                            if (swalConfirmBtn) {
-                                swalConfirmBtn.style.setProperty('display', 'none', 'important');
-                            }
-                            
-                            const progressDiv = document.getElementById('progress-text');
-                            if (progressDiv) {
-                                progressDiv.innerHTML = `
-                                    <div class="text-center">
-                                        <div class="text-warning mb-2">
-                                            <i class="bi bi-exclamation-triangle-fill fs-4"></i><br>
-                                            <span class="small fw-bold">${data.message}</span>
+                                form.dataset.paused = "true";
+                                Swal.hideLoading();
+                                
+                                const progressDiv = document.getElementById('progress-text');
+                                if (progressDiv) {
+                                    progressDiv.innerHTML = `
+                                        <div class="text-center">
+                                            <div class="text-warning mb-2">
+                                                <img src="/static/icons/exclamation-triangle.svg" width="30" class="mb-2"><br>
+                                                <span class="small fw-bold">${data.message}</span>
+                                            </div>
+                                            <div class="d-grid gap-2 d-md-block mt-3">
+                                                <button type="button" id="continue-btn" class="btn btn-sm btn-warning fw-bold px-3">Continue</button>
+                                                <button type="button" id="skip-all-btn" class="btn btn-sm btn-outline-secondary px-3">Skip All Errors</button>
+                                            </div>
                                         </div>
-                                        <div class="d-grid gap-2 d-md-block">
-                                            <button type="button" id="continue-btn" class="btn btn-sm btn-warning fw-bold">Continue</button>
-                                            <button type="button" id="skip-all-btn" class="btn btn-sm btn-outline-secondary">Skip All Errors</button>
-                                        </div>
-                                    </div>
-                                `;
+                                    `;
 
-                                // Setup Skip All button
-                                document.getElementById('skip-all-btn').onclick = () => {
-                                    form.dataset.skipAllWarnings = "true";
-                                    document.getElementById('continue-btn').click(); 
-                                };
+                                    document.getElementById('skip-all-btn').onclick = () => {
+                                        form.dataset.skipAllWarnings = "true";
+                                        document.getElementById('continue-btn').click(); 
+                                    };
+                                }
+
+                                await waitForClick(); 
+                                delete form.dataset.paused;
+                                if (form.dataset.skipAllWarnings !== "true") {
+                                    Swal.showLoading();
+                                }
                             }
 
-                            await waitForClick(); // PAUSE HERE
-                            
-                            delete form.dataset.paused;
-                            if (form.dataset.skipAllWarnings !== "true") {
-                                Swal.showLoading();
+                            else if (data.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success', 
+                                    title: 'Completed', 
+                                    html: `<div class="text-muted">${data.message}</div>`,
+                                    confirmButtonColor: '#4e73df'
+                                });
+                                form.reset();
+                            } 
+
+                            else if (data.status === 'error') {
+                                Swal.fire({ icon: 'error', title: 'Process Failed', text: data.message });
                             }
+
+                        } catch (parseError) {
+                            console.error("Chunk parse error:", parseError);
                         }
-
-                        // --- 3. SUCCESS STATUS ---
-                        else if (data.status === 'success') {
-                            Swal.fire({
-                                icon: 'success', 
-                                title: 'Completed', 
-                                html: `<div>${data.message}</div>`,
-                                confirmButtonText: 'Done'
-                            });
-                            skippedRows = [];
-                            delete form.dataset.paused;
-                            delete form.dataset.skipAllWarnings;
-                            form.reset();
-                        } 
-
-                        // --- 4. ERROR STATUS ---
-                        else if (data.status === 'error') {
-                            Swal.fire({ icon: 'error', title: 'Process Failed', text: data.message });
-                        }
-
-                    } catch (parseError) {
-                        console.error("Chunk parse error:", parseError);
                     }
                 }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Connection Error', text: err.message });
+            } finally {
+                delete form.dataset.submitting;
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
             }
-        } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Connection Error', text: err.message });
-        } finally {
-            delete form.dataset.submitting;
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
         }
-    }
-</script>
+    </script>
 
 </body>
 </html>
