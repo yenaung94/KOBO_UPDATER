@@ -43,7 +43,7 @@ def update():
                 
                 survey = auth_resp.json().get('content', {}).get('survey', [])
                 
-            except request.exceptions.ConnectionError:
+            except ConnectionError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
 
             survey = auth_resp.json().get('content', {}).get('survey', [])
