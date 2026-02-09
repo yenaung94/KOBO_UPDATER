@@ -76,11 +76,29 @@ async def update():
                 base_api_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/data"
                 existing_ids = set()
                 
+                params = {
+                            "fields": '["_id"]',
+                            "limit": 10000
+                        }
+                
                 try:
-                    list_resp = await client.get(f"{base_api_url}/?fields=[\"_id\"]&limit=10000")
+                    list_resp = await client.get(base_api_url, params=params)
                     if list_resp.status_code == 200:
-                        existing_ids = {str(item['_id']) for item in list_resp.json().get('results', [])}
-                except Exception: pass
+                        data = list_resp.json()
+                        # Extract IDs safely
+                        results = data.get('results', [])
+                        existing_ids = {str(item['_id']) for item in results if '_id' in item}
+                    else:
+                        # Instead of 'pass', yield the error so you can see it in SweetAlert
+                        yield json.dumps({
+                            "status": "warning", 
+                            "message": f"Could not sync existing IDs. Server returned: {list_resp.status_code}"
+                        }) + "\n"
+                except Exception as e:
+                    yield json.dumps({
+                        "status": "warning", 
+                        "message": f"Pre-fetch error: {str(e)}"
+                    }) + "\n"
                 
                 for _, row in df.iterrows():
                     processed_count += 1
@@ -113,21 +131,25 @@ async def update():
                         continue
                     
                     data_payload = {xml_path: str(row[csv_col]) for csv_col, xml_path in valid_fields.items() if pd.notna(row[csv_col])}
-                    bulk_payload = {
-                        "payload": {
-                            "submission_ids": [int(float(sub_id))],
-                            "data": data_payload
+                    if data_payload:
+                        bulk_payload = {
+                            "payload": {
+                                "submission_ids": [int(float(sub_id))],
+                                "data": data_payload
+                            }
                         }
-                    }
-
-                    try:
-                        resp = await client.patch(patch_url, json=bulk_payload)
-                        if resp.status_code in [200, 201]:
-                            updated_count += 1
-                        else:
-                            yield json.dumps({"status": "error", "message": f"ID {sub_id} failed: {resp.text}"}) + "\n"
-                    except Exception:
-                        pass 
+                    
+                        try:
+                            resp = await client.patch(patch_url, json=bulk_payload)
+                            if resp.status_code in [200, 201]:
+                                updated_count += 1
+                            else:
+                                yield json.dumps({"status": "error", "message": f"ID {sub_id} failed: {resp.text}"}) + "\n"
+                        except Exception as e:
+                            yield json.dumps({
+                                    "status": "warning", 
+                                    "message": f"Network error on ID {sub_id}: {str(e)}"
+                                }) + "\n"
                     
                     # Yield progress update
                     yield json.dumps({
@@ -144,8 +166,9 @@ async def update():
                 }) + "\n"
 
         # 5. Sync wrapper to bridge Async Generator with Flask Response
-        def sync_generator_wrapper(async_gen):
+        def sync_wrapper(async_gen):
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             try:
                 while True:
                     try:
@@ -156,7 +179,7 @@ async def update():
                 loop.close()
 
         return Response(
-            stream_with_context(sync_generator_wrapper(generate())), 
+            stream_with_context(sync_wrapper(generate())), 
             content_type='application/x-ndjson'
         )
 

@@ -94,13 +94,25 @@ async def clone():
             async with httpx.AsyncClient(headers=headers, timeout=120.0) as client:
                 existing_ids = set()
                 if has_id_column:
+                    params = {
+                        "fields": '["_id"]',
+                        "limit": 10000
+                    }
                     try:
-                        # We only need the '_id' field from Kobo
-                        list_resp = await client.get(f"{base_api_url}/?fields=[\"_id\"]&limit=10000")
+                        list_resp = await client.get(base_api_url, params=params)
                         if list_resp.status_code == 200:
                             data = list_resp.json()
                             existing_ids = {str(item['_id']) for item in data.get('results', [])}
-                    except Exception : pass
+                        else:
+                            yield json.dumps({
+                                "status": "warning", 
+                                "message": f"Duplicate check failed (HTTP {list_resp.status_code}). Proceeding with caution."
+                            }) + "\n"
+                    except Exception as e:
+                        yield json.dumps({
+                            "status": "warning", 
+                            "message": f"Duplicate check skipped due to error: {str(e)}"
+                        }) + "\n" 
                     
                 for _, row in df.iterrows():
                     processed_count += 1
