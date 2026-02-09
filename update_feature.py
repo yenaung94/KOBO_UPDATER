@@ -21,7 +21,7 @@ def update():
 
         # 2️⃣ CSV Reading
         try:
-            df = pd.read_csv(io.BytesIO(csv_file.read()), encoding='utf-8-sig', sep=",")  # Explicit separator
+            df = pd.read_csv(io.BytesIO(csv_file.read()), encoding='utf-8-sig', sep=",")
             if df.empty:
                 return jsonify({"status": "error", "message": "CSV file is empty."}), 400
             if '_id' not in df.columns:
@@ -31,20 +31,23 @@ def update():
 
         headers = {"Authorization": f"Token {config.token}"}
 
-        # 3️⃣ Fetch Survey Schema
+        # 3️⃣ Fetch Survey Schema with proper Error Handling
         with httpx.Client(headers=headers, timeout=30) as client:
             verify_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/"
+            
             try:
-                auth_resp = request.get(verify_url, headers=headers, timeout=30)
-                if auth_resp.status_code == 401:
-                    return jsonify({"status": "error", "message": "Invalid API Token."}), 401
-                if auth_resp.status_code == 404:
-                    return jsonify({"status": "error", "message": "Asset ID not found."}), 404
-                
-                survey = auth_resp.json().get('content', {}).get('survey', [])
-                
-            except ConnectionError:
+                auth_resp = client.get(verify_url)
+                auth_resp.raise_for_status() # Optional: triggers except block for 4xx/5xx
+            except httpx.ConnectError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 401:
+                    return jsonify({"status": "error", "message": "Invalid API Token."}), 401
+                if e.response.status_code == 404:
+                    return jsonify({"status": "error", "message": "Asset ID not found."}), 404
+                return jsonify({"status": "error", "message": f"Server Error: {e.response.status_code}"}), 400
+            except Exception as e:
+                return jsonify({"status": "error", "message": f"Connection Error: {str(e)}"}), 400
 
             survey = auth_resp.json().get('content', {}).get('survey', [])
 
@@ -72,8 +75,7 @@ def update():
                                        params={"fields": '["_id"]', "limit": 10000})
                 if list_resp.status_code == 200:
                     existing_ids = {str(item['_id']) for item in list_resp.json().get('results', [])}
-            except Exception as e:
-                # We can continue even if prefetch fails
+            except Exception:
                 existing_ids = set()
 
         # 4️⃣ Generator function to stream progress
@@ -93,6 +95,7 @@ def update():
                         sub_id = str(raw_id).split('.')[0].strip() if pd.notna(raw_id) else ""
 
                         try:
+                            # --- YOUR VALIDATION LOGIC ---
                             if not sub_id or sub_id.lower() == 'nan':
                                 invalid_ids_count += 1
                                 yield json.dumps({"status": "warning", "message": "ID is empty."}) + "\n"
@@ -105,24 +108,23 @@ def update():
                                 yield json.dumps({"status": "warning", "message": f"ID {sub_id} not found."}) + "\n"
                                 continue
 
-                            # Build payload
                             data_payload = {xml_path: str(row[csv_col])
                                             for csv_col, xml_path in valid_fields.items()
                                             if pd.notna(row[csv_col])}
+                            
                             if data_payload:
                                 bulk_payload = {"payload": {"submission_ids": [int(float(sub_id))], "data": data_payload}}
                                 resp = client.patch(patch_url, json=bulk_payload)
+                                
                                 if resp.status_code in [200, 201]:
                                     updated_count += 1
                                 else:
-                                    yield json.dumps({"status": "error",
-                                                      "message": f"ID {sub_id} failed: {resp.text[:50]}"}) + "\n"
+                                    yield json.dumps({"status": "error", "message": f"ID {sub_id} failed: {resp.text[:50]}"}) + "\n"
 
                         except Exception as e:
-                            yield json.dumps({"status": "warning",
-                                              "message": f"Error on ID {sub_id}: {str(e)}"}) + "\n"
+                            yield json.dumps({"status": "warning", "message": f"Error on ID {sub_id}: {str(e)}"}) + "\n"
 
-                    # Yield progress after each batch
+                    # Yield progress update
                     yield json.dumps({
                         "status": "progress",
                         "current": min(i + batch_size, total_rows),
@@ -130,7 +132,6 @@ def update():
                         "success": updated_count
                     }) + "\n"
 
-            # Final summary
             yield json.dumps({
                 "status": "success",
                 "message": f"Update complete: {updated_count} updated, {invalid_ids_count} invalid, {not_found_count} not found."
