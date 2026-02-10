@@ -43,11 +43,22 @@ def update():
                     return jsonify({"status": "error", "message": "Asset ID not found on this server."}), 404
                 
                 survey = auth_resp.json().get('content', {}).get('survey', [])
+                choices_list = auth_resp.json().get('content', {}).get('choices', [])
+                
             except httpx.ConnectError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
+            
+            # Map choice list names to their valid values
+            choice_map = {}
+            for c in choices_list:
+                list_name = c.get('list_name')
+                if list_name not in choice_map: choice_map[list_name] = []
+                choice_map[list_name].append(str(c.get('name')))
 
             # Path Mapping Logic
             path_map = {}
+            field_types = {}
+            field_constraints = {}
             group_stack = []
             excluded_types = ['begin_group', 'end_group', 'calculate', 'start', 'end', 'note', 'deviceid']
 
@@ -55,11 +66,21 @@ def update():
                 i_type, i_name = item.get('type'), item.get('name')
                 if i_type == 'begin_group':
                     group_stack.append(i_name)
+                    
                 elif i_type == 'end_group':
                     if group_stack: group_stack.pop()
+                    
                 elif i_type not in excluded_types and i_name:
                     full_path = "/".join(group_stack + [i_name])
                     path_map[full_path.lower()] = full_path
+                    field_types[full_path] = i_type
+                    
+                    if i_type in ['select_one', 'select_multiple']:
+                        list_name = item.get('select_from_list_name')
+                        field_constraints[full_path] = {
+                            "type": i_type,
+                            "allowed": choice_map.get(list_name, [])
+                        }
 
             valid_fields = {col: path_map[col.lower()] for col in df.columns if col.lower() in path_map}
 
@@ -84,6 +105,7 @@ def update():
                 for _, row in df.iterrows():
                     processed_count += 1
                     raw_val = row.get('_id')
+                    
                     # ID Cleaning: Convert to float, then int, then string to remove .0
                     sub_id = str(int(float(raw_val))).strip() if pd.notna(raw_val) and str(raw_val).lower() != 'nan' else ""
                     
@@ -105,6 +127,62 @@ def update():
                             not_found_count += 1
                             raise ValueError(f"ID {sub_id} not found in Kobo.")
                         
+                        # 4. CHOICES VALIDATION LOGIC
+                        data_payload = {}
+                        for csv_col, xml_path in valid_fields.items():
+                            val = row[csv_col]
+                            if pd.isna(val): continue
+                            
+                            str_val = str(val).strip()
+                            
+                            # Get the expected type from our map
+                            expected_type = field_types.get(xml_path, 'text')
+
+                            # A. Validate Integers
+                            if expected_type == 'integer':
+                                try:
+                                    # Check if it's a valid whole number
+                                    float_val = float(str_val)
+                                    if not float_val.is_integer():
+                                        raise ValueError
+                                    str_val = str(int(float_val)) # Normalize (e.g., "10.0" -> "10")
+                                except ValueError:
+                                    raise ValueError(f"Column '{csv_col}' expects a whole number, but got '{str_val}'.")
+
+                            # B. Validate Decimals
+                            elif expected_type == 'decimal':
+                                try:
+                                    float(str_val)
+                                except ValueError:
+                                    raise ValueError(f"Column '{csv_col}' expects a decimal number, but got '{str_val}'.")
+
+                            # C. Validate Dates (YYYY-MM-DD)
+                            elif expected_type == 'date':
+                                try:
+                                    # Kobo expects ISO format YYYY-MM-DD
+                                    pd.to_datetime(str_val).strftime('%Y-%m-%d')
+                                except:
+                                    raise ValueError(f"Column '{csv_col}' expects a date, but '{str_val}' is invalid.")
+                            
+                            # Check if this field has Kobo constraints (Select One/Multi)
+                            if xml_path in field_constraints:
+                                constraint = field_constraints[xml_path]
+                                allowed = constraint["allowed"]
+                                
+                                if constraint["type"] == "select_one":
+                                    if str_val not in allowed:
+                                        raise ValueError(f"'{str_val}' is not a valid choice for '{csv_col}'. Allowed: {allowed}")
+                                
+                                elif constraint["type"] == "select_multiple":
+                                    # Split by space (Kobo format) or comma (Common CSV format)
+                                    selected_items = [s.strip() for s in str_val.replace(',', ' ').split()]
+                                    for item in selected_items:
+                                        if item not in allowed:
+                                            raise ValueError(f"'{item}' in '{str_val}' is not a valid choice for '{csv_col}'. Allowed: {allowed}")
+                                    str_val = " ".join(selected_items) # Ensure Kobo space-separated format
+                                    
+                            data_payload[xml_path] = str_val
+                        
                     except ValueError as e:
                         yield json.dumps({
                             "status": "warning", 
@@ -112,7 +190,7 @@ def update():
                         }) + "\n"
                         continue
                     
-                    data_payload = {xml_path: str(row[csv_col]) for csv_col, xml_path in valid_fields.items() if pd.notna(row[csv_col])}
+                    # Send Update
                     bulk_payload = {
                         "payload": {
                             "submission_ids": [int(float(sub_id))],
