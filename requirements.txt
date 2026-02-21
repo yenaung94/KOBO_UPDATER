@@ -4,3 +4,4 @@ gunicorn
 httpx
 pandas
 pydantic
+truststore
