@@ -140,9 +140,9 @@
         }
 
         @keyframes pulse-animation {
-            0% { opacity: 0.7; }
-            50% { opacity: 0.4; }
-            100% { opacity: 0.7; }
+            0% { opacity: 0.8; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.8; }
         }
     </style>
 </head>
@@ -517,7 +517,7 @@
                                                         ${data.err_detail.map(err => `
                                                             <tr style="border-bottom: 1px solid #f0f0f0;">
                                                                 <td style="padding: 6px 8px; vertical-align: top; width: 20px;">•</td>
-                                                                <td style="padding: 6px 8px; line-height: 1.2 !important; font-size: 0.5rem !important;">${err}</td>
+                                                                <td style="padding: 6px 8px; line-height: 1.4 !important; font-size: 0.85rem !important;">${err}</td>
                                                             </tr>
                                                         `).join('')}
                                                     </tbody>
@@ -573,15 +573,14 @@
                                             padding: 10px; 
                                             max-height: 150px; 
                                             overflow-y: auto; 
-                                            font-family: monospace; 
-                                            font-size: 0.5rem !important;
+                                            font-family: monospace;
                                             color: #d63384;
                                             word-break: break-all;">
                                     ${columnList}
                                 </div>
                             </div>
                         `,
-                        confirmButtonText: 'I will fix it',
+                        confirmButtonText: 'Close & Review',
                         confirmButtonColor: '#f8bb86',
                     });
                 }else {
