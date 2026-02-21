@@ -96,6 +96,32 @@
             border-color: var(--primary-color); 
         }
 
+        /* 1. Ensure feedback messages show correctly in input groups */
+        .was-validated .input-group > .form-control:invalid ~ .invalid-feedback,
+        .was-validated .input-group > .form-control:valid ~ .valid-feedback {
+            display: block;
+        }
+
+        /* 2. Red State (Invalid) */
+        /* Targets the icon box in a group AND standalone inputs with custom borders */
+        .was-validated .input-group:has(.form-control:invalid) .input-group-text,
+        .was-validated .form-control:invalid {
+            border-color: #dc3545 !important;
+        }
+
+        /* 3. Green State (Valid) */
+        /* Targets the icon box in a group AND standalone inputs with custom borders */
+        .was-validated .input-group:has(.form-control:valid) .input-group-text,
+        .was-validated .form-control:valid {
+            border-color: #198754 !important;
+        }
+
+        /* 4. Fix for the Bootstrap validation icon position in input groups */
+        .was-validated .input-group .form-control {
+            padding-right: calc(1.5em + 0.75rem) !important;
+            background-position: right calc(0.375em + 0.1875rem) center !important;
+        }
+
         .btn-update { 
             background: var(--primary-color); 
             border: none; 
@@ -107,6 +133,17 @@
         .btn-update:hover { background: #2e59d9; transform: translateY(-3px); }
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .btn-pulse {
+            animation: pulse-animation 1.5s infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes pulse-animation {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.7; }
+        }
     </style>
 </head>
 <body>
@@ -130,38 +167,42 @@
                             <img src="{{ url_for('static', filename='icons/pencil-square.svg') }}" width="16" height="16" class="me-2 icon-svg"> Bulk Update
                         </button>
                         <button data-bs-toggle="pill" data-bs-target="#clonePanel">
-                            <img src="{{ url_for('static', filename='icons/layers.svg') }}" width="16" height="16" class="me-2 icon-svg"> Clone Data
+                            <img src="{{ url_for('static', filename='icons/layers.svg') }}" width="16" height="16" class="me-2 icon-svg"> Import Data
                         </button>
                     </div>
 
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="updatePanel">
-                            <form onsubmit="handleFormSubmit(event, 'update')">
+                            <form class="needs-validation" onsubmit="handleFormSubmit(event, 'update')" novalidate>
                                 <div class="row g-4">
                                     <div class="col-md-6">
                                         <label class="form-label text-uppercase">Server URL</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
                                             <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
+                                            <div class="invalid-feedback">Please provide a valid server URL.</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-uppercase">API Token</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
                                             <input type="password" name="token" class="form-control" placeholder="40-character (e.g., 1a2b3c4d5e6f7...)" required>
+                                            <div class="invalid-feedback">API Token is required.</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-uppercase">Asset (Form) ID</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/file-earmark-code.svg') }}" width="16" height="16"></span>
                                             <input type="text" name="asset_id" class="form-control" placeholder="e.g., aBc123De45fGh" required>
+                                            <div class="invalid-feedback">Form Asset ID is required.</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-uppercase">Data Source (CSV)</label>
                                         <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
+                                        <div class="invalid-feedback">Please select a CSV file to upload.</div>
                                     </div>
                                     <div class="col-12 mt-5">
                                         <button type="submit" class="btn btn-primary btn-update w-100 text-white">
@@ -173,32 +214,36 @@
                         </div>
 
                         <div class="tab-pane fade" id="clonePanel">
-                            <form onsubmit="handleFormSubmit(event, 'clone')">
+                            <form class="needs-validation" onsubmit="handleFormSubmit(event, 'clone')" novalidate>
                                 <div class="row g-4">
                                     <div class="col-md-6">
                                         <label class="form-label text-uppercase">Server URL</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/globe.svg') }}" width="16" height="16"></span>
                                             <input type="text" name="server_url" class="form-control" placeholder="kf.kobotoolbox.org" required>
+                                            <div class="invalid-feedback">Please provide a valid server URL.</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-uppercase">API Token</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/shield-lock.svg') }}" width="16" height="16"></span>
                                             <input type="password" name="token" class="form-control" placeholder="40-character (e.g., 1a2b3c4d5e6f7...)" required>
+                                            <div class="invalid-feedback">API Token is required.</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-uppercase">Target Project Asset ID</label>
-                                        <div class="input-group">
+                                        <div class="input-group has-validation">
                                             <span class="input-group-text"><img src="{{ url_for('static', filename='icons/plus-circle.svg') }}" width="16" height="16"></span>
                                             <input type="text" name="target_asset_id" class="form-control" placeholder="e.g., aBc123De45fGh" required>
+                                            <div class="invalid-feedback">Form Asset ID is required.</div>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-uppercase">Old Data (CSV)</label>
                                         <input type="file" name="file" class="form-control" style="border-left: 1px solid #dee2e6;" accept=".csv" required>
+                                        <div class="invalid-feedback">Please select a CSV file to upload.</div>
                                     </div>
                                     <div class="col-12 mt-5">
                                         <button type="submit" class="btn btn-success btn-update w-100 text-white" style="background: #1cc88a;">
@@ -336,14 +381,6 @@
     </div>
 
     <script>
-        // Helper to pause execution until a specific button is clicked
-        const waitForClick = () => new Promise(resolve => {
-            const btn = document.getElementById('continue-btn');
-            if (!btn) return resolve();
-            btn.onclick = () => resolve();
-        });
-
-        // Handle UI segment navigation
         document.querySelectorAll('.nav-segment button').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.nav-segment button').forEach(b => b.classList.remove('active'));
@@ -352,141 +389,264 @@
         });
         
         async function handleFormSubmit(e, mode) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+            if (e && e.preventDefault) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
 
-            const form = e.target;
-            
-            delete form.dataset.paused;
-            delete form.dataset.skipAllWarnings;
+            const form = e.currentTarget || (e instanceof HTMLFormElement ? e : e.target);
+            if (!form) return;
 
-            const fileInput = form.querySelector('input[type="file"]');
-            if (fileInput && fileInput.files.length === 0) {
-                Swal.fire({ icon: 'warning', title: 'File Required', text: 'Please select a CSV file.' });
+            if(!form.checkValidity()) {
+                form.classList.add('was-validated');
                 return;
             }
 
-            if (form.dataset.submitting === 'true') return;
+            delete form.dataset.paused;
+            if (form.dataset.submitting === 'true') {
+                return;
+            };
+            form.classList.add('was-validated');
             form.dataset.submitting = 'true';
-
-            // Update button state using your local SVG icon
+            
             const btn = form.querySelector('button[type="submit"]');
             const originalContent = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<img src="/static/icons/arrow-repeat.svg" width="18" height="18" class="spin me-2 icon-svg"> Processing...';
-
-            Swal.fire({ 
-                title: 'Processing Data', 
-                html: '<div id="progress-text">Initializing connection...</div>',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading() 
-            });
+            
+            let isConfirmed = false;
+            let skipUntil = 0;
 
             try {
-                const response = await fetch(`/${mode}`, { 
-                    method: 'POST', 
-                    body: new FormData(form) 
-                });
+                
+                while(true) {
 
-                if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Server Error');
-                }
+                    const form_data = new FormData(form);
+                    const fileInput = form.querySelector('input[type="file"]');
+                    if (fileInput && fileInput.files[0]) {
+                        form_data.set('file', fileInput.files[0]);
+                    }
+        
+                    form_data.set("is_confirmed", isConfirmed ? "true" : "false");
+                    form_data.set('skip_until', String(skipUntil));
+        
+                    console.log("Sending to Backend - isConfirmed:", isConfirmed);
+                    btn.disabled = true;
+                    btn.innerHTML = '<img src="/static/icons/arrow-repeat.svg" width="18" height="18" class="spin me-2 icon-svg"> Processing...';
+                    if (!isConfirmed && skipUntil === 0) {
+                        Swal.fire({ 
+                            title: 'Processing Data', 
+                            html: '<div id="progress-text">Initializing connection...</div>',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading() 
+                        });
+                    }
+                    
+                    const response = await fetch(`/${mode}`, { 
+                        method: 'POST', 
+                        body: form_data
+                    });
+    
+                    if (!response.ok && response.headers.get('content-type')?.includes('application/json')) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Server Error');
+                    }
+    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = "";
+                    let restart = false;
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        
-                        try {
-                            const data = JSON.parse(line);
-
-                            if (data.status === 'progress') {
-                                if (!form.dataset.paused || form.dataset.skipAllWarnings === "true") {
-                                    const progressDiv = document.getElementById('progress-text');
-                                    if (progressDiv) {
-                                        progressDiv.innerHTML = `Finished: <b style="font-size: 1.2em; color: #4e73df;">${data.current}</b> of ${data.total}`;
-                                    }
-                                }
-                            }
-
-                            else if (data.status === 'warning') {
-                                if (form.dataset.skipAllWarnings === "true") continue;
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+    
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop();
+    
+                        for (const line of lines) {
+                            const trimmedLine = line.trim();
+                            if (!line.trim()) continue;
+                                const data = JSON.parse(trimmedLine);
+    
+                            if (data.status === 'warning') {
+                                btn.disabled = false;
+                                btn.innerHTML = originalContent;
 
                                 form.dataset.paused = "true";
                                 Swal.hideLoading();
-                                
-                                const swalConfirmBtn = Swal.getConfirmButton();
-                                if (swalConfirmBtn) {
-                                    swalConfirmBtn.style.setProperty('display', 'none', 'important');
-                                }
-
+                                Swal.update({ title: '', showConfirmButton: false });
                                 const progressDiv = document.getElementById('progress-text');
-                                if (progressDiv) {
-                                    progressDiv.innerHTML = `
-                                        <div class="text-center">
-                                            <div class="text-warning mb-2">
-                                                <img src="/static/icons/exclamation-triangle.svg" width="30" class="mb-2 filter-warning"><br>
-                                                <span class="small fw-bold">${data.message}</span>
-                                            </div>
-                                            <div class="d-grid gap-2 d-md-block mt-3">
-                                                <button type="button" id="continue-btn" class="btn btn-sm btn-warning fw-bold px-3">Continue</button>
-                                                <button type="button" id="skip-all-btn" class="btn btn-sm btn-outline-secondary px-3">Skip All Errors</button>
-                                            </div>
-                                        </div>
-                                    `;
-
-                                    document.getElementById('skip-all-btn').onclick = () => {
-                                        form.dataset.skipAllWarnings = "true";
-                                        document.getElementById('continue-btn').click(); 
-                                    };
-                                }
-
-                                await waitForClick(); 
                                 delete form.dataset.paused;
-                                if (form.dataset.skipAllWarnings !== "true") {
-                                    Swal.showLoading();
-                                }
-                            }
+                                const result = await showWarningUI(data, progressDiv);
+                                console.log("skip until",skipUntil)
+                                isConfirmed = result.confirmed;
+                                skipUntil = result.skipUntil;
 
-                            else if (data.status === 'success') {
+                                restart = true;
+                                break;
+                            }
+                            if (data.status === 'progress') {
+                                if(data.is_validation_complete) {
+                                    isConfirmed = true;
+                                    skipUntil = 0;
+                                    restart = true;
+                                    await reader.cancel();
+                                    break;
+                                }
+                                Swal.update({
+                                    title: 'Processing Data...',
+                                    html: `<div id="progress-text" style="min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <div class="spinner-border text-success mb-3" role="status"></div>
+                                            <div>Finished: <b style="font-size: 1.2em; color: #4e73df;">${data.current}</b> of ${data.total}</div>
+                                        </div>`,
+                                    showConfirmButton: false
+                                });
+                            }
+                            if (data.status === 'success') {
+                                btn.disabled = false;
+                                btn.innerHTML = originalContent;
+
+                                let errorSection = "";
+                                if (data.err_detail && data.err_detail.length > 0) {
+                                    errorSection = `
+                                        <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                                            <div class= "text-primary", style="text-align: left; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px;">Issue Details:</div>
+                                            <div style="max-height: 120px; overflow-y: auto; overflow-x: hidden; text-align: left; background: #fafafa; border-radius: 4px;">
+                                                <table style="width: 100%; border-collapse: collapse; color: #444;">
+                                                    <tbody>
+                                                        ${data.err_detail.map(err => `
+                                                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                                                <td style="padding: 6px 8px; vertical-align: top; width: 20px;">•</td>
+                                                                <td style="padding: 6px 8px; line-height: 1.2 !important; font-size: 0.5rem !important;">${err}</td>
+                                                            </tr>
+                                                        `).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>`;
+                                }
+
                                 Swal.fire({
-                                        icon: 'success', 
-                                        title: 'Completed', 
-                                        // Just show the message from Python. It has everything.
-                                        html: `<div>${data.message}</div>`, 
-                                        confirmButtonText: 'Done'
-                                    });
-                                skippedRows = []; // Reset the array
-                                delete form.dataset.paused;
-                                delete form.dataset.skipAllWarnings;
+                                    icon: 'success',
+                                    title: 'Import Complete',
+                                    html: `
+                                        <div style="font-size: 0.9rem; color: #333;">
+                                            <p style="margin-bottom: 15px; line-height: 1.4;">${data.message}</p>
+                                            ${errorSection}
+                                        </div>
+                                    `,
+                                    confirmButtonText: 'Done',
+                                    confirmButtonColor: '#3085d6',
+                                    width: '480px',
+                                    padding: '1rem'
+                                });
+
                                 form.reset();
-                            } 
-
-                            else if (data.status === 'error') {
-                                Swal.fire({ icon: 'error', title: 'Process Failed', text: data.message });
+                                delete form.dataset.paused;
+                                form.classList.remove('was-validated');
+                                delete form.dataset.submitting;
+                                return;
                             }
-
-                        } catch (parseError) {
-                            console.error("Chunk parse error:", parseError);
+                            if (data.status === 'error') {
+                                Swal.fire({ icon: 'error', title: 'Process Failed', text: data.message });
+                                delete form.dataset.submitting;
+                                return;
+                            }
                         }
+                        if (restart) break;
                     }
+                    if (!restart) break;
                 }
+
             } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Connection Error', text: err.message });
+                if (err.message.includes("Field Mismatch")) {
+                    const columnList = err.message.split(': ')[1];
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'CSV Header Mismatch',
+                        html: `
+                            <div style="text-align: left; font-size: 0.9rem;">
+                                <p>The following columns are not recognized by Kobo:</p>
+                                <div style="background: #f8f9fa; 
+                                            border: 1px solid #dee2e6; 
+                                            border-radius: 4px; 
+                                            padding: 10px; 
+                                            max-height: 150px; 
+                                            overflow-y: auto; 
+                                            font-family: monospace; 
+                                            font-size: 0.5rem !important;
+                                            color: #d63384;
+                                            word-break: break-all;">
+                                    ${columnList}
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'I will fix it',
+                        confirmButtonColor: '#f8bb86',
+                    });
+                }else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Process Failed',
+                        text: err.message || 'An unexpected error occurred during validation.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+
+                if (typeof form !== 'undefined') {
+                    delete form.dataset.submitting;
+                }
+
             } finally {
                 delete form.dataset.submitting;
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
             }
+        }
+
+        function showWarningUI(data, progressDiv) {
+            return new Promise((resolve) => {
+
+                if (progressDiv) {
+                    progressDiv.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-warning mb-2">
+                                <img src="/static/icons/exclamation-triangle.svg" width="30" class="mb-2 filter-warning"><br>
+                                <span class="small d-block mx-auto" 
+                                    style="max-width: 100%; line-height: 1.4; max-height: 4em; overflow: hidden;">
+                                    ${data.message}
+                                </span>
+                            </div>
+                            <div class="d-grid gap-4 d-md-block mt-3">
+                                <button type="button" id="continue-btn" class="btn btn-sm btn-warning px-3 text-white">Continue</button>
+                                <button type="button" id="confirm-sync-btn" class="btn btn-sm btn-outline-success px-3">Skip All Errors</button>
+                            </div>
+                        </div>
+                    `;
+    
+                    document.getElementById("continue-btn").onclick = (e) => {
+                        const btn = e.target;
+                        btn.disabled = true;
+                        btn.classList.add('btn-pulse');
+                        btn.innerText = "Processing";
+                        resolve({
+                            confirmed: data.is_validation_complete,
+                            skipUntil: data.current
+                        });
+                    };
+    
+                    document.getElementById("confirm-sync-btn").onclick = (e) => {
+                        const btn = e.target;
+                        btn.disabled = true;
+                        btn.classList.add('btn-pulse');
+                        btn.innerText = "Processing";
+                        resolve({
+                            confirmed: true,
+                            skipUntil: 0
+                        });
+                    };
+                }
+            })
         }
     </script>
 

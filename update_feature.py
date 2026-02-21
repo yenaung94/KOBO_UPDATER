@@ -1,7 +1,7 @@
 import io
 import json
 import pandas as pd
-import httpx
+import httpx, truststore, ssl
 from flask import Blueprint, request, jsonify, Response, stream_with_context
 import contextlib
 from schemas import KoboUpdateSchema
@@ -31,9 +31,10 @@ def update():
             return jsonify({"status": "error", "message": f"CSV Read Error: {str(e)}"}), 400
 
         headers = {"Authorization": f"Token {config.token}"}
+        ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT) 
         
-        # 3. Initial Schema Fetch (To validate Asset and get Mapping)
-        with httpx.Client(headers=headers, timeout=30.0) as client:
+        # FETCH SCHEMA
+        with httpx.Client(headers=headers, timeout=30.0, follow_redirects=True, verify=ctx) as client:
             verify_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/"
             try:
                 auth_resp = client.get(verify_url)
@@ -101,7 +102,7 @@ def update():
             total_rows = len(df)
             patch_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/data/bulk/"
 
-            with httpx.Client(headers=headers, timeout=120.0) as client:
+            with httpx.Client(headers=headers, timeout=120.0, follow_redirects=True, verify=ctx) as client:
                 for _, row in df.iterrows():
                     processed_count += 1
                     raw_val = row.get('_id')
