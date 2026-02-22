@@ -11,16 +11,22 @@ update_bp = Blueprint('update_bp', __name__)
 @update_bp.route('/update', methods=['POST'])
 def update():
     try:
+        # FORM DATA VALIDATION
+        raw_url = request.form.get('server_url', '').rstrip('/')
+        is_confirmed_raw = request.form.get("is_confirmed", "false")
+        is_confirmed = str(is_confirmed_raw).lower() == "true"
+        skip_until = int(request.form.get('skip_until', 0))
+        
         # 1. Config Validation
         raw_data = {
-            "server_url": request.form.get('server_url', '').rstrip('/'),
+            "server_url": raw_url,
             "token": request.form.get('token'),
             "asset_id": request.form.get('asset_id')
         }
         config = KoboUpdateSchema(**raw_data)
         csv_file = request.files.get('file')
 
-        # 2. CSV Reading
+        # CSV READING AND VALIDATION
         try:
             df = pd.read_csv(io.BytesIO(csv_file.read()), encoding='utf-8-sig', sep=None, engine='python')
             if df.empty:
@@ -29,6 +35,7 @@ def update():
                 return jsonify({"status": "error", "message": "CSV missing '_id' column."}), 400
         except Exception as e:
             return jsonify({"status": "error", "message": f"CSV Read Error: {str(e)}"}), 400
+
 
         headers = {"Authorization": f"Token {config.token}"}
         ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT) 
@@ -49,7 +56,7 @@ def update():
             except httpx.ConnectError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
             
-            # Map choice list names to their valid values
+            # MAP CHOICES LIST NAMES TO ALLOWED VALUES
             choice_map = {}
             for c in choices_list:
                 list_name = c.get('list_name')
@@ -83,7 +90,12 @@ def update():
                             "allowed": choice_map.get(list_name, [])
                         }
 
-            valid_fields = {col: path_map[col.lower()] for col in df.columns if col.lower() in path_map}
+            csv_cols = [c.strip().lower() for c in df.columns if c.strip().lower() not in ['start', 'end', '_id', 'username']]
+            invalid_cols = [c for c in csv_cols if c not in path_map]
+            if invalid_cols:
+                return jsonify({"status": "error", "message": f"Field Mismatch: {invalid_cols} are not in Kobo."}), 400
+            
+            valid_fields = {col: path_map[str(col).strip().lower()] for col in df.columns if str(col).strip().lower() in path_map}
 
             # Pre-fetch existing IDs
             existing_ids = set()
@@ -97,22 +109,28 @@ def update():
         def generate():
             updated_count = 0
             processed_count = 0
+            progress_count = 0
             invalid_ids_count = 0
             not_found_count = 0
+            invalid_records_details = []
+            
             total_rows = len(df)
             patch_url = f"{config.server_url}/api/v2/assets/{config.asset_id}/data/bulk/"
 
             with httpx.Client(headers=headers, timeout=120.0, follow_redirects=True, verify=ctx) as client:
-                for _, row in df.iterrows():
-                    processed_count += 1
-                    raw_val = row.get('_id')
+                for idx, row in df.iterrows():
+                    processed_count = idx + 1
                     
-                    # ID Cleaning: Convert to float, then int, then string to remove .0
-                    sub_id = str(int(float(raw_val))).strip() if pd.notna(raw_val) and str(raw_val).lower() != 'nan' else ""
+                    is_valid = (not is_confirmed and processed_count == total_rows)
+                    if not is_confirmed and processed_count <= skip_until:
+                        continue
+                    
+                    raw_id = row.get('_id')
+                    sub_id = str(raw_id).split('.')[0].strip() if pd.notna(raw_id) else ""
                     
                     try:
                         # 1. EMPTY CHECK
-                        if not sub_id or sub_id == 'nan':
+                        if not sub_id or sub_id.lower() in ['nan', 'null', 'none']:
                             invalid_ids_count += 1
                             raise ValueError("ID is empty.")
                         
@@ -126,7 +144,7 @@ def update():
                         # 3. EXISTENCE CHECK (Not Found)
                         if sub_id not in existing_ids:
                             not_found_count += 1
-                            raise ValueError(f"ID {sub_id} not found in Kobo.")
+                            raise ValueError("ID was not found in Kobo.")
                         
                         # 4. CHOICES VALIDATION LOGIC
                         data_payload = {}
@@ -139,7 +157,7 @@ def update():
                             # Get the expected type from our map
                             expected_type = field_types.get(xml_path, 'text')
 
-                            # A. Validate Integers
+                            # INTEGERS VALIDATION
                             if expected_type == 'integer':
                                 try:
                                     # Check if it's a valid whole number
@@ -150,7 +168,7 @@ def update():
                                 except ValueError:
                                     raise ValueError(f"Column '{csv_col}' expects a whole number, but got '{str_val}'.")
 
-                            # B. Validate Decimals
+                            # DECIMALS VALIDATION
                             elif expected_type == 'decimal':
                                 try:
                                     float(str_val)
@@ -183,45 +201,61 @@ def update():
                                     str_val = " ".join(selected_items) # Ensure Kobo space-separated format
                                     
                             data_payload[xml_path] = str_val
+                            
+                        if not data_payload:
+                            yield json.dumps({
+                                "status": "warning", 
+                                "current": processed_count,
+                                "total": total_rows,
+                                "is_validation_complete": is_valid,
+                                "message": f"Row {processed_count}: No matching Kobo fields found. Please check CSV headers."
+                            })+ "\n"
+                            return
                         
                     except ValueError as e:
-                        yield json.dumps({
-                            "status": "warning", 
-                            "message": str(e)
-                        }) + "\n"
-                        continue
+                        raw_id_str = str(row.get('_id')).split('.')[0] if pd.notna(row.get('_id')) else "unknown"
+                        error_msg = f"ID {raw_id_str}: {str(e)}"
+                        invalid_records_details.append(error_msg)
+                        
+                        if not is_confirmed:
+                            invalid_records_details.append(str(e))
+                            yield json.dumps({
+                                "status": "warning", 
+                                "current": processed_count,
+                                "total": total_rows,
+                                "is_validation_complete": is_valid,
+                                "message": f"Id_{raw_id_str}:  {str(e)}"
+                            }) + "\n"
+                            break
+                        else:
+                            continue
                     
-                    # Send Update
-                    bulk_payload = {
-                        "payload": {
-                            "submission_ids": [int(float(sub_id))],
-                            "data": data_payload
+                    if is_confirmed or is_valid:    
+                        progress_count += 1
+                        yield json.dumps({
+                            "status": "progress", 
+                            "total": total_rows,
+                            "current" :progress_count,
+                            "is_validation_complete": is_valid
+                        }) + "\n"
+                    
+                    if is_confirmed:
+                        bulk_payload = {
+                            "payload": {"submission_ids": [int(float(sub_id))], "data": data_payload}
                         }
-                    }
-
-                    try:
+                        
                         resp = client.patch(patch_url, json=bulk_payload)
                         if resp.status_code in [200, 201]:
                             updated_count += 1
-                        else:
-                            yield json.dumps({"status": "error", "message": f"ID {sub_id} failed: {resp.text[:100]}"}) + "\n"
-                    except Exception as e:
-                        yield json.dumps({"status": "error", "message": f"System error on ID {sub_id}: {str(e)}"}) + "\n"
-                    
-                    # Yield progress update
-                    yield json.dumps({
-                        "status": "progress",
-                        "current": processed_count,
-                        "total": total_rows,
-                        "success": updated_count
-                    }) + "\n"
 
-                # Yield final result
+                not_found_part = f"{not_found_count} Id were not found. " if not_found_count > 0 else ""
+                invalid_part = f"Found {invalid_ids_count} Id invalid records." if invalid_ids_count > 0 else ""
                 yield json.dumps({
                     "status": "success",
-                    "message": f"Update complete: {updated_count} updated, {invalid_ids_count} invalid _ids, {not_found_count} _ids not found."
+                    "message": f"Update complete. Updated {updated_count} record(s). {not_found_part} {invalid_part}",
+                    "err_detail" : invalid_records_details
                 }) + "\n"
-
+                
         return Response(
             stream_with_context(generate()), 
             content_type='application/x-ndjson'

@@ -61,7 +61,7 @@ def clone():
             except httpx.ConnectError:
                 return jsonify({"status": "error", "message": "Could not connect to server. Check your Server URL."}), 400
 
-            # Map choice list names to allowed values
+            # MAP CHOICES LIST NAMES TO ALLOWED VALUES
             choice_map = {}
             for c in choices_list:
                 list_name = c.get('list_name')
@@ -242,6 +242,7 @@ def clone():
                             break
                         else:
                             continue
+                        
                     if is_confirmed or is_valid:    
                         progress_count += 1
                         yield json.dumps({

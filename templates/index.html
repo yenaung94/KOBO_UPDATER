@@ -25,6 +25,12 @@
             background-color: var(--bg-light); 
         }
 
+        .small-icon {
+            transform: scale(0.6); /* Icon ကို ၄၀% လျှော့ချတာပါ */
+            margin-top: 10px !important;
+            margin-bottom: 0px !important;
+        }
+
         /* Base icon styling */
         .icon-svg {
             vertical-align: middle;
@@ -381,6 +387,38 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Welcome to Kobo Patcher!',
+                text: 'Please read the Setup Guide carefully before getting started.',
+                icon: 'info',
+                width: '350px',
+                showCancelButton: true,
+                confirmButtonColor: '#4e73df',
+                cancelButtonColor: '#6e7d88',
+                confirmButtonText: 'Open Guide',
+                cancelButtonText: 'Later',
+                focusConfirm: false,
+                allowOutsideClick: false,
+                didOpen : () => {
+                    const confirmBtn = Swal.getConfirmButton();
+                    confirmBtn.blur();
+                },
+                customClass: {
+                    icon: 'small-icon',
+                    title: 'fs-5 mt-2',
+                    htmlContainer: 'small' 
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                   setTimeout(() => {
+                        var myModal = new bootstrap.Modal(document.getElementById('guideModal'));
+                        myModal.show();
+                   },200)
+                }
+            });
+        });
+
         document.querySelectorAll('.nav-segment button').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.nav-segment button').forEach(b => b.classList.remove('active'));
